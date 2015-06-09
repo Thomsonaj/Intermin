@@ -1,0 +1,592 @@
+<?php
+
+/**
+ * Implements hook_menu().
+ */
+function main_menu() {
+    $items = array();
+    /* $items['invoice/invoice-import'] = array(//this creates a URL that will call this form at "flower/flower-details"
+      'title' => 'Import Invoices', //page title
+      'description' => 'A form to import invoices and store it in database.',
+      'page callback' => 'drupal_get_form', //this is the function that will be called when the page is accessed.  for a form, use drupal_get_form
+      'page arguments' => array('invoice_importer_form'), //put the name of the form here
+      'access callback' => TRUE, //array('administer users'), || array('access content')
+      ); */
+    $items['kengroup/main'] = array(//this creates a URL that will call this form at "flower/bouquet-addFlower"
+      'title' => 'New Work Order',
+      // 'description' => 'A form to add flowers to bouquet and store it in database.',
+      'page callback' => 'drupal_get_form', //this is the function that will be called when the page is accessed.  for a form, use drupal_get_form
+      'page arguments' => array('main_form', 1), //put the name of the form here
+      'access callback' => TRUE,
+      // 'access arguments' => array(1),
+      'type' => MENU_CALLBACK,
+    );
+    $items['kengroup/main/view'] = array(//this creates a URL that will call this form at "flower/bouquet-addFlower"
+      'title' => 'View Work Order Form',
+      // 'description' => 'A form to add flowers to bouquet and store it in database.',
+      'page callback' => 'drupal_get_form', //this is the function that will be called when the page is accessed.  for a form, use drupal_get_form
+      'page arguments' => array('main_view_work_order_form', 1), //put the name of the form here
+      'access callback' => TRUE,
+      // 'access arguments' => array(1),
+      'type' => MENU_CALLBACK,
+    );
+    $items['kengroup/about'] = array(//this creates a URL that will call this form at "flower/bouquet-addFlower"
+      'title' => 'About',
+      // 'description' => 'A form to add flowers to bouquet and store it in database.',
+      'page callback' => 'drupal_get_form', //this is the function that will be called when the page is accessed.  for a form, use drupal_get_form
+      // 'page arguments' => array('main_view_work_order_form', 1), //put the name of the form here
+      'access callback' => TRUE,
+      // 'access arguments' => array(1),
+      'type' => MENU_CALLBACK,
+    );
+    $items['kengroup/employee'] = array(//this creates a URL that will call this form at "flower/bouquet-addFlower"
+      'title' => 'Employee List',
+      // 'description' => 'A form to add flowers to bouquet and store it in database.',
+      'page callback' => 'drupal_get_form', //this is the function that will be called when the page is accessed.  for a form, use drupal_get_form
+      'page arguments' => array('main_employee_form'), //put the name of the form here
+      'access callback' => TRUE,
+      // 'access arguments' => array(1),
+      'type' => MENU_CALLBACK,
+    );
+    $items['kengroup/employee-detail'] = array(//this creates a URL that will call this form at "flower/bouquet-addFlower"
+      'title' => 'Employee List',
+      // 'description' => 'A form to add flowers to bouquet and store it in database.',
+      'page callback' => 'drupal_get_form', //this is the function that will be called when the page is accessed.  for a form, use drupal_get_form
+      'page arguments' => array('main_employee_detail_form'), //put the name of the form here
+      'access callback' => TRUE,
+      // 'access arguments' => array(1),
+      'type' => MENU_CALLBACK,
+    );
+    $items['kengroup/view-invoice'] = array(//this creates a URL that will call this form at "flower/bouquet-addFlower"
+      'title' => 'View Invoice',
+      // 'description' => 'A form to add flowers to bouquet and store it in database.',
+      'page callback' => 'drupal_get_form', //this is the function that will be called when the page is accessed.  for a form, use drupal_get_form
+      'page arguments' => array('view_invoice_form'), //put the name of the form here
+      'access callback' => TRUE,
+      //'access arguments' => array(1),
+      'type' => MENU_CALLBACK,
+    );
+    $items['kengroup/view-invoice-details'] = array(//this creates a URL that will call this form at "flower/bouquet-addFlower"
+      'title' => 'View Invoice',
+      // 'description' => 'A form to add flowers to bouquet and store it in database.',
+      'page callback' => 'drupal_get_form', //this is the function that will be called when the page is accessed.  for a form, use drupal_get_form
+      'page arguments' => array('view_invoice_details_form', 2), //put the name of the form here
+      'access callback' => TRUE,
+      'access arguments' => array(1),
+      'type' => MENU_CALLBACK,
+    );
+
+    return $items;
+}
+
+function view_invoice_details_form($form, $form_state, $inv_no = 0) {
+    // dsm('invoice number=='.$inv_no);
+    global $user;
+    $arr_status = array(
+      0 => t("Allocation of Invoice"),
+      1 => t("Calling"),
+      2 => t("Issues"),
+      3 => t("Invoice Verification"),
+      4 => t("Follow-up"),
+      5 => t("Call"),
+      6 => t("Mail"),
+      7 => t("Visit"),
+      8 => t("Physical copy despatched along with date"),
+      9 => t("Physical copy receipt confirmed along with date"),
+      10 => t("Collected along with date"),
+      11 => t("Ken Bill Pending"),
+      12 => t("Ken Invoiced"),
+      13 => t("Ken Invoice collected"),
+    );
+    /*  $header = array('sr_no', 'sap_customer_code', 'goods_supplied_from_state', 'vc_comp_code', 'vc_comp_initial', 'invoice_number', 'customer_name', 'customer_address', 'customer_location'
+      , 'customer_contact', 'customer_mobile', 'contact_email', 'quarter', 'finantial_year', 'invoice_date',
+
+      'month', 'inv_amt', 'currency', 'po_number', 'tin_number', 'issue_c_form_to_entity_name', 'form_type', 'bill_state'
+      , 'region', 'total_differential_tax_liability', 'division', 'sub_division', 'main_division', 'sales_person_code', 'sales_person_name', 'status');
+     */
+    $header = array('Item', 'Value', 'Item', 'Value');
+    $result = db_select('c_form_pendency', 'c')
+        ->fields('c')
+        ->condition('invoice_number', $inv_no)
+        //->extend('TableSort')
+        //->orderByHeader($header)
+        ->execute();
+
+    $default_status;
+    $entries = $result;
+    //$output = '';
+    $rows = array();
+    $newrow = array();
+    $entry = $entries->fetchObject();
+    /*  foreach ($entries as $entry) {
+      /*  $rows[] = array($entry->sr_no, $entry->sap_customer_code, $entry->goods_supplied_from_state, $entry->vc_comp_code, $entry->vc_comp_initial, l($entry->invoice_number, 'kengroup/view-invoice-details/' . $entry->invoice_number), $entry->customer_name, $entry->customer_address, $entry->customer_location
+      , $entry->customer_contact, $entry->customer_mobile, $entry->contact_email, $entry->quarter, $entry->finantial_year, $entry->invoice_date,
+
+      $entry->month, $entry->inv_amt, $entry->currency, $entry->po_number, $entry->tin_number, $entry->issue_c_form_to_entity_name, $entry->form_type, $entry->bill_state
+      , $entry->region, $entry->total_differential_tax_liability, $entry->division, $entry->sub_division, $entry->main_division, $entry->sales_person_code, $entry->sales_person_name, $entry->status);
+     * 
+     */
+    $newrow[] = array('sr_no', $entry->sr_no, 'month', $entry->month);
+    $newrow[] = array('sap_customer_code', $entry->sap_customer_code, 'inv_amt', $entry->inv_amt);
+    $newrow[] = array('goods_supplied_from_state', $entry->goods_supplied_from_state, 'month', $entry->month);
+    $newrow[] = array('vc_comp_code', $entry->vc_comp_code, 'currency', $entry->currency);
+    $newrow[] = array('vc_comp_initial', $entry->vc_comp_initial, 'po_number', $entry->po_number);
+    $newrow[] = array('invoice_number', $entry->invoice_number, 'tin_number', $entry->tin_number);
+    $newrow[] = array('customer_name', $entry->customer_name, 'issue_c_form_to_entity_name', $entry->issue_c_form_to_entity_name);
+    $newrow[] = array('customer_address', $entry->customer_address, 'form_type', $entry->form_type);
+    $newrow[] = array('customer_location', $entry->customer_location, 'bill_state', $entry->bill_state);
+    $newrow[] = array('customer_contact', $entry->customer_contact, 'region', $entry->region);
+    $newrow[] = array('customer_mobile', $entry->customer_mobile, 'total_differential_tax_liability', $entry->total_differential_tax_liability);
+    $newrow[] = array('contact_email', $entry->contact_email, 'division', $entry->division);
+    $newrow[] = array('quarter', $entry->quarter, 'sub_division', $entry->sub_division);
+    $newrow[] = array('finantial_year', $entry->finantial_year, 'main_division', $entry->main_division);
+    $newrow[] = array('invoice_date', $entry->invoice_date, 'sales_person_code', $entry->sales_person_code);
+    $newrow[] = array('status', $entry->status, '', '');
+    $default_status = $entry->status;
+    //  }
+//$rows=array(array($inv_no));
+    //$output = theme('table', array('header' => $header, 'rows' => $newrow));
+    $form['table'] = array(
+      '#theme' => 'table',
+      // '#header' => $header,
+      '#rows' => $newrow,
+      '#empty' => t('No content available.'),);
+
+// $form['table'] = array('#type'=>'markup','#markup'=>$output);
+
+
+    $form['status'] = array(
+      "#type" => "select",
+      "#title" => t("Select Invoice"),
+      "#options" => $arr_status,
+      "#default_value" => $default_status,
+    );
+
+    $form['user'] = array(
+      '#type' => 'markup',
+      '#markup' => 'Author: ' . $user->name . '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'
+      . '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;',
+    );
+    $form['date'] = array(
+      '#type' => 'markup',
+      '#markup' => ' Date:' . format_date(time(), 'custom', 'd/m/Y') . ' &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'
+      . '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'
+      . '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'
+      . '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'
+      . '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'
+      . '&nbsp;&nbsp;&nbsp;',
+    );
+
+    /**
+     * to get the number of comments in the table
+     */
+    $no_of_comments = db_select('invoice_comments', 'c')
+        ->fields('c')
+        ->condition('invoice_number', $inv_no)
+        ->execute()
+        ->rowCount();
+
+    $form['view_comments'] = array(
+      '#type' => 'button',
+      // '#markup' => 'View all comments('.$no_of_comments.')',
+      '#value' => 'View all comments(' . $no_of_comments . ')',
+      // '#attributes' => array('onMouseClick' => ''),
+      '#ajax' => array(
+        'event' => 'click',
+        'callback' => 'ajax_callback',
+        'wrapper' => 'checkboxes-div',
+        'method' => 'replace',
+      ),
+    );
+    /*  $form['subject'] = array(
+      '#type' => 'textfield',
+      '#title' => t('subject'),
+      '#description' => t('mandatory field to add comment'),
+      '#size' => 50,); */
+    $form['all_comments'] = array(
+      '#type' => 'markup',
+      '#markup' => ' ',
+      '#prefix' => '<div id="checkboxes-div">',
+      '#suffix' => '</div>',);
+
+    $form['comments'] = array(
+      '#type' => 'textarea',
+      '#title' => t('Add your comments'),
+      '#cols' => 70,
+      '#rows' => 3,
+      '#resizable' => FALSE,
+      '#maxlength' => 5000,
+      '#description' => t('Add Comments')
+    );
+    $form_state['storage']['invoice_number'] = $inv_no;
+
+    $form['save'] = array(
+      '#type' => 'submit',
+      '#value' => 'Save'
+    );
+    return $form;
+}
+
+function ajax_callback($form, $form_state) {
+
+    $header = array('Author', 'Date', 'Comment');
+    // dsm('invoice number=='.$form_state['storage']['invoice_number']);
+    $result = db_select('invoice_comments', 'c')
+        ->fields('c', array('comments', 'date', 'author'))
+        //->extend('TableSort')
+        //->orderByHeader($header)
+        ->condition('invoice_number', $form_state['storage']['invoice_number'])
+        ->execute();
+    $entries = $result;
+    $output = '';
+    $rows = array();
+    foreach ($entries as $entry) {
+
+        $rows[] = array($entry->author, $entry->date, $entry->comments);
+    }
+    $output = theme('table', array('header' => $header, 'rows' => $rows));
+
+    $form['all_comments']['#markup'] = $output;
+    return $form['all_comments'];
+}
+
+function view_invoice_details_form_submit($form, $form_state) {
+    global $user;
+    $status = $form_state['values']['status'];
+    $invoice_number = $form_state['storage']['invoice_number'];
+    $comments = $form_state['values']['comments'];
+    // $subject = $form_state['values']['subject'];
+    if (!empty($invoice_number)) {
+        try {
+            db_update('c_form_pendency') // Table name no longer needs {}
+                ->fields(array(
+                  'status' => $status,
+                ))
+                ->condition('invoice_number', $invoice_number)
+                ->execute();
+            if (!empty($comments)) {
+                // dsm('subject==' . $subject);
+                // dsm('comments==' . $comments);
+                db_insert('invoice_comments') // Table name no longer needs {}
+                    ->fields(array(
+                      'invoice_number' => $invoice_number, 'comments' => $comments, 'date' => format_date(time(), 'custom', 'd/m/Y, h:i:s a'), 'author' => t($user->name),
+                    ))
+                    ->execute();
+            }
+        }
+        catch (Exception $ex) {
+            dsm($ex);
+        }
+    }
+}
+
+function view_invoice_form($form, $form_state) {
+
+
+
+    $header = array('sr_no', 'sap_customer_code', 'goods_supplied_from_state', 'vc_comp_code', 'vc_comp_initial', 'invoice_number', 'customer_name', 'customer_address', 'customer_location'
+      , 'customer_contact', 'customer_mobile', 'contact_email', 'quarter', 'finantial_year', 'invoice_date', 'month', 'inv_amt', 'currency', 'po_number', 'tin_number');
+    $result = db_select('c_form_pendency', 'c')
+        ->fields('c')
+        //->extend('TableSort')
+        //->orderByHeader($header)
+        ->execute();
+
+
+    $entries = $result;
+    //$output = '';
+    $rows = array();
+    foreach ($entries as $entry) {
+        $rows[] = array($entry->sr_no, $entry->sap_customer_code, $entry->goods_supplied_from_state, $entry->vc_comp_code, $entry->vc_comp_initial, l($entry->invoice_number, 'kengroup/view-invoice-details/' . $entry->invoice_number), $entry->customer_name, $entry->customer_address, $entry->customer_location
+          , $entry->customer_contact, $entry->customer_mobile, $entry->contact_email, $entry->quarter, $entry->finantial_year, $entry->invoice_date, $entry->month, $entry->inv_amt, $entry->currency, $entry->po_number, $entry->tin_number);
+    }
+
+
+    /* $rows = array(array(1, 2, 3, 4),array(1, 2, 3, 4),array(1, 2, 3, 4),array(1, 2, 3, 4),array(1, 2, 3, 4),array(1, 2, 3, 4),
+      array(1, 2, 3, 4),array(1, 2, 3, 4),array(1, 2, 3, 4),array(1, 2, 3, 4),array(1, 2, 3, 4),array(1, 2, 3, 4),); */
+    $per_page = 10;
+// Initialize the pager
+    $current_page = pager_default_initialize(count($rows), $per_page);
+// Split your list into page sized chunks
+    $chunks = array_chunk($rows, $per_page, TRUE);
+// Show the appropriate items from the list
+    $output = theme('table', array('header' => $header, 'rows' => $chunks[$current_page]));
+    // $output = theme('table', array('header' => $header, 'rows' => $rows));
+    $output .= theme('pager', array('quantity', count($rows)));
+
+    $form['mkup'] = array(
+      '#type' => 'markup',
+      '#markup' => $output);
+
+    /* $form['table'] = array(
+      '#theme' => 'table',
+      '#header' => $header,
+      '#options' => $chunks[$current_page],
+      '#empty' => t('No content available.'),
+      '#js_select' => TRUE,
+      ); */
+    // $form['pager'] = array('#theme' => 'pager',);
+
+    return $form;
+}
+
+function main_employee_detail_form($form, $form_state) {
+    dpm($form['my_value']);
+    $header = array(
+      '', 'sl.no.', 'task', 'client name', 'due date');
+    $rows = array(
+      array('', '1', 'invoice 3', 'Pantaloons', '3/6/2016'),
+      array('', '2', 'invoice 5', 'loons', '3/6/2016'),
+      array('', '3', 'invoice 4', 'Panta', '3/6/2016'),
+      array('', '4', 'invoice 2', 'Ploons', '3/6/2016'),);
+
+    $form['table'] = array(
+      '#theme' => 'table',
+      '#header' => $header,
+      '#rows' => $rows,
+      '#empty' => t('No content available.'),
+        // '#js_select' => TRUE,
+    );
+    return $form;
+}
+
+function main_employee_form($form, $form_state) {
+
+    $rows = array(
+      array(
+        '111',
+        l(t('Mahesh'), 'kengroup/employee-detail', array('attributes' => array('class' => 'about-link'))),
+        '1',
+      ),
+      array(
+        '112',
+        l(t('Michael'), 'kengroup/employee-detail', array('attributes' => array('class' => 'about-link'))),
+        '3',
+      ),
+      array(
+        '113',
+        l(t('Ashok'), 'kengroup/employee-detail', array('attributes' => array('class' => 'about-link'))),
+        '2',
+      ),
+      array(
+        '114',
+        l(t('Kiran'), 'kengroup/employee-detail', array('attributes' => array('class' => 'about-link'))),
+        '5',
+      ),
+      array(
+        '115',
+        l(t('Praveen'), 'kengroup/employee-detail', array('attributes' => array('class' => 'about-link'))),
+        '3',
+      ),
+      array(
+        '116',
+        l(t('Rahul'), 'kengroup/employee-detail', array('attributes' => array('class' => 'about-link'))),
+        '4',
+      ),);
+    $header = array(
+      'Employee ID',
+      'Employee Name',
+      'Tasks');
+    /* $output;
+      $output = theme('table', array('header' => $header, 'rows' => $rows));
+
+      $form['mkup'] = array(
+      '#type' => 'markup',
+      '#markup' => $output);
+
+     */
+
+
+    $form['table'] = array(
+      '#type' => 'tableselect',
+      '#header' => $header,
+      '#options' => $rows,
+      '#empty' => t('No content available.'),
+      '#js_select' => TRUE,
+    );
+
+    $form['submit'] = array(
+      '#type' => 'submit',
+      '#value' => 'next',
+    );
+    return $form;
+}
+
+function main_employee_form_submit($form, $form_state) {
+    $form_state['storage']['my_value'] = 'test_sample';
+
+    // Force the form to rebuild. If we do not do this, the value(s) in $form_state['storage']
+    // will be lost
+    $form_state['rebuild'] = TRUE;
+    drupal_goto('kengroup/employee-detail', array('query' => array('destination' => 'somehere')));
+    //$form_state['redirect'] = 'kengroup/employee-detail';
+}
+
+function main_form($form, $form_state) {
+    //drupal_set_title("Wlcome to Ken-Group");   // to set the page title.... 
+    $form['Filters'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Check the fiters for import'),
+      '#collapsible' => TRUE,
+      '#collapsed' => FALSE,
+        //'#attributes' => array('class' => array('container-inline')), 
+    );
+
+
+    $form['Filters']['filter_state'] = array(
+      '#type' => 'textfield',
+      '#size' => 30,
+      '#title' => t('Enter the state:'),
+      '#description' => "Enter the state for filter invoice.",
+    );
+
+    $form['submit'] = array(
+      '#type' => 'submit',
+      '#value' => t('submit'),
+    );
+
+    return $form;
+}
+
+function main_form_submit($form, &$form_state) {
+    drupal_set_message('submit');
+}
+
+function main_theme() {
+    return array(
+      'my_theme_function' => array(
+        'arguments' => array(),
+    ));
+}
+
+function main_view_work_order_form($form, $form_state) {
+    drupal_set_title("View Work Order");   // to set the page title....
+    // drupal_set_message('table showing invoice details');
+
+
+
+    $options = array(
+      array(
+        'title' => 'How to',
+        'content_type' => 'content',
+        'status' => 'published',
+        '#attributes' => array('class' => array('article-row')),
+      ),
+      array(
+        'title' => 'Privacy',
+        'content_type' => 'Page',
+        'status' => 'published',
+        '#attributes' => array('class' => array('page-row')),
+      ),
+      array(
+        'title' => 'Ho',
+        'content_type' => 'Article',
+        'status' => 'published',
+        '#attributes' => array('class' => array('article-row')),
+      ),
+      array(
+        'title' => 'Privacy',
+        'content_type' => 'Page',
+        'status' => 'published',
+        '#attributes' => array('class' => array('page-row')),
+      ),
+      array(
+        'title' => 'How ',
+        'content_type' => 'Article',
+        'status' => 'published',
+        '#attributes' => array('class' => array('article-row')),
+      ),
+      array(
+        'title' => 'Privacy',
+        'content_type' => 'Page33333',
+        'status' => 'published',
+        '#attributes' => array('class' => array('page-row')),
+      ),
+      array(
+        'title' => 'How to',
+        'content_type' => 'Article',
+        'status' => 'published',
+        '#attributes' => array('class' => array('article-row')),
+      ),
+      array(
+        'title' => 'Privacy',
+        'content_type' => 'Page',
+        'status' => 'published',
+        '#attributes' => array('class' => array('page-row')),
+      ),
+      array(
+        'title' => 'Ho',
+        'content_type' => 'Article',
+        'status' => 'published',
+        '#attributes' => array('class' => array('article-row')),
+      ),
+      array(
+        'title' => 'Privacy',
+        'content_type' => 'Page',
+        'status' => 'published',
+        '#attributes' => array('class' => array('page-row')),
+      ),
+      array(
+        'title' => 'How ',
+        'content_type' => 'Article',
+        'status' => 'published',
+        '#attributes' => array('class' => array('article-row')),
+      ),
+    );
+
+    $header = array(
+      'title' => t('Order No.'),
+      'content_type' => t('Invoice no.'),
+      'status' => t('customer'),
+      'title1' => t('Quarter'),
+      'content_type1' => t('Order No.'),
+      'status1' => t('Invoice no.'),
+      'title2' => t('customer'),
+      'content_type2' => t('Order No.'),
+      'status2' => t('Invoice no.'),
+      'title3' => t('customer'),
+      'content_type3' => t('Order No.'),
+      'status3' => t('Invoice no.'),
+      'title4' => t('customer'),
+      'content_type4' => t('Order No.'),
+      'status4' => t('Invoice no.'),
+      'title5' => t('customer'),
+      'content_type5' => t('Order No.'),
+      'status5' => t('Invoice no.'),
+      'title6' => t('customer'),
+      'content_type6' => t('Order No.'),
+      'status6' => t('Invoice no.'),
+      'title7' => t('customer'),
+      'content_type7' => t('Order No.'),
+      'status7' => t('Invoice no.'),
+    );
+
+    $per_page = 15;
+// Initialize the pager
+    $current_page = pager_default_initialize(count($options), $per_page);
+// Split your list into page sized chunks
+    $chunks = array_chunk($options, $per_page, TRUE);
+// Show the appropriate items from the list
+    $output = theme('table', array('header' => $header, 'rows' => $chunks[$current_page]));
+    // $output = theme('table', array('header' => $header, 'rows' => $rows));
+    $output .= theme('pager', array('quantity', count($options)));
+
+    /*   $form['mkup'] = array(
+      '#type' => 'markup',
+      '#markup' => $output);
+     */
+    $form['table'] = array(
+      '#type' => 'tableselect',
+      '#header' => $header,
+      '#options' => $chunks[$current_page],
+      '#empty' => t('No content available.'),
+      '#js_select' => TRUE,
+    );
+    $form['pager'] = array('#theme' => 'pager',);
+    // theme_tableselect($variables);
+    return $form;
+}
+
+function main_view_work_order_form_submit($form, &$form_state) {
+    drupal_set_message('submit');
+}

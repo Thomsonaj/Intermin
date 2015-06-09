@@ -1,0 +1,172 @@
+<?php
+
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+
+function invoice_importer_schema() {
+    $schema = array();
+    invoice_importer_c_form_pendency($schema);
+    return $schema;
+}
+
+function invoice_importer_c_form_pendency(&$schema) {
+    $schema['c_form_pendency'] = array
+      (
+      'description' => 'this table contains pending forms',
+      'fields' => array
+        (
+        'sr_no' => array
+          (
+          'type' => 'int',
+          'unsigned' => TRUE,
+        ),
+        'sap_customer_code' => array
+          (
+          'type' => 'varchar',
+          'length' => 100,
+        ),
+        'goods_supplied_from_state' => array
+          (
+          'type' => 'varchar',
+          'length' => 200,
+        ),
+        'vc_comp_code' => array
+          (
+          'type' => 'varchar',
+          'length' => 100,
+        ),
+        'vc_comp_initial' => array
+          (
+          'type' => 'varchar',
+          'length' => 100,
+        ),
+        'invoice_number' => array
+          (
+          'type' => 'varchar',
+          'length' => '100',
+          'not null' => TRUE,
+        ),
+        'customer_name' => array
+          (
+          'type' => 'varchar',
+          'length' => 200,
+        ),
+        'customer_address' => array
+          (
+          'type' => 'varchar',
+          'length' => 200,
+        ),
+        'customer_location' => array
+          (
+          'type' => 'varchar',
+          'length' => 150,
+        ),
+        'customer_contact' => array
+          (
+          'type' => 'varchar',
+          'length' => 13,
+        ),
+        'customer_mobile' => array
+          (
+          'type' => 'varchar',
+          'length' => 13,
+        ),
+        'contact_email' => array(
+          'type' => 'varchar',
+          'length' => 225,
+        ),
+        'quarter' => array(
+          'type' => 'varchar',
+          'length' => 30,
+        ),
+        'finantial_year' => array(
+          'type' => 'varchar',
+          'length' => 10,
+        ),
+        'invoice_date' => array(
+          'type' => 'varchar',
+          'length' => 10,
+        ),
+        'month' => array(
+          'type' => 'varchar',
+          'length' => 20,
+        ),
+        'inv_amt' => array(
+          'type' => 'int',
+          'unsigned' => TRUE,
+        ),
+        'currency' => array(
+          'type' => 'varchar',
+          'length' => 20,
+        ),
+        'po_number' => array(
+          'type' => 'varchar',
+          'length' => 20,
+        ),
+        'tin_number' => array(
+          'type' => 'varchar',
+          'length' => 25,
+          'not null' => TRUE,
+        ),
+        'issue_c_form_to_entity_name' => array(
+          'type' => 'varchar',
+          'length' => 100,
+        ),
+        'form_type' => array(
+          'type' => 'varchar',
+          'length' => 100,
+        ),
+        'bill_state' => array(
+          'type' => 'varchar',
+          'length' => 25,
+        ),
+        'region' => array(
+          'type' => 'varchar',
+          'length' => 100,
+        ),
+        'total_differential_tax_liability' => array(
+          'type' => 'varchar',
+          'length' => 100,
+        ),
+        'division' => array(
+          'type' => 'varchar',
+          'length' => 100,
+        ),
+        'sub_division' => array(
+          'type' => 'varchar',
+          'length' => 10,
+        ),
+        'main_division' => array(
+          'type' => 'varchar',
+          'length' => 10,
+        ),
+        'sales_person_code' => array(
+          'type' => 'varchar',
+          'length' => 25,
+        ),
+        'sales_person_name' => array(
+          'type' => 'varchar',
+          'length' => 125,
+        ),
+        'status' => array(
+          'type' => 'int',
+          'default' => 0,
+          'unsigned' => TRUE,
+        ),
+      ),
+      'indexes' => array(
+        'tin_number' => array('tin_number'), //'index_name' => array('on which field ths index is applies')
+        'invoice_number' => array('invoice_number'),
+      ),
+      'primary key' => array('tin_number', 'invoice_number'),
+    );
+}
+
+function invoice_importer_update_1() {
+    if (!db_table_exists('c_form_pendency')) {
+        db_create_table('c_form_pendency', drupal_get_schema('c_form_pendency', TRUE));
+    }
+}

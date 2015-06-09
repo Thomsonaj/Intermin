@@ -1,0 +1,79 @@
+<?php
+
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+
+function main_schema() {
+    $schema = array();
+    main_comments($schema);
+    return $schema;
+}
+
+function main_comments(&$schema) {
+    $schema['invoice_comments'] = array
+    (
+    'description' => 'this table contains all the comments while updating status',
+    'fields' => array
+    (
+    'c_id' => array
+    (
+    'description' => t('comments id'),
+        'type' => 'serial',
+		'unsigned' => TRUE,
+        'not null' => TRUE,
+	),
+    'invoice_number' => array
+    (
+    'type' => 'varchar',
+    'length' => 50,
+    ),
+    'subject' => array
+    (
+    'type' => 'varchar',
+    'length' => 200,
+    ),
+    'comments' => array
+    (
+    'type' => 'text',
+    'size' => 'big',
+    ),
+    'date' => array
+    (
+    'type' => 'varchar',
+    'length' => 25,
+    ),
+    'author' => array
+    (
+    'type' => 'varchar',
+    'length' => 50,
+    ),
+    
+    ),
+   
+    'primary key' => array('c_id'),
+    );
+}
+
+/**
+ * Creates table: invoice_comments
+ */
+function main_update_1() {
+    if (!db_table_exists('invoice_comments')) {
+        db_create_table('invoice_comments', drupal_get_schema('invoice_comments', TRUE));
+    }
+}
+
+/**
+ * Remove subject column: from table:
+ */
+function main_update_2(){
+    if(db_table_exists('invoice_comments')){
+        db_drop_field('invoice_comments', 'subject');
+    }
+}
+/**
+ * sample comment
+ */
