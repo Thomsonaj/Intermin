@@ -1,5 +1,0 @@
-name = "Enter invoice details"
-core = "7.x"
-description = "Enter invoice details to existing invoice or create a new invoice bill."
-version = VERSION
-package = Invoice Entry
