@@ -163,12 +163,7 @@ function bartik_ken_field__taxonomy_term_reference($variables) {
 /**
  * Implements hook_theme().
  */
- /*'view_invoice_form' => array(
-        'render element' => 'form',
-        'path' => drupal_get_path('theme', 'bartik_ken') . '/templates',
-        'template' => 'view-invoice-order-form',
-      ),*/
-  
+   
 function bartik_ken_theme() {
     $arr_theme =  array('view_invoice_details_form' => array(
         'render element' => 'form',

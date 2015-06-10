@@ -119,7 +119,7 @@ class invoiceUpload extends FeedsProcessor {
 //                        }
 //                    }
                     if (!$error && isset($col_map[$key])) {
-                        $value = preg_replace('/[^(\x20-\x7F)]*/', '', $value);
+                       // $value = preg_replace('/[^(\x20-\x7F)]*/', '', $value);
                         $data[$col_map[$key]] = $value;
                     }
                 }

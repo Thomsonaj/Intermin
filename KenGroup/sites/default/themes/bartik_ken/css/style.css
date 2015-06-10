@@ -216,7 +216,7 @@ height:36px;
 }
 
 /*
-.view-invoice-order-form table th:first-of-type {
+.view-invoice-order-form table th:last-of-type {
 
     position: absolute;
    left:1210px;
@@ -224,13 +224,13 @@ height:36px;
     background: #757575;
   background: rgba(0, 0, 0, 0.51);
 }
-.view-invoice-order-form table td:first-of-type {
+.view-invoice-order-form table td:last-of-type {
     position: absolute;
    left:1210px;
     background: #e4e4e4;
   background: rgba(0, 0, 0, 0.105);
-}*/
-
+}
+*/
 
 /*-------------------view-invoice-order-details-form--------------------*/
 
