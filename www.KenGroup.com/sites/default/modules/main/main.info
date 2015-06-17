@@ -1,0 +1,8 @@
+name = Main module
+description = Sample Module to show all the forms.
+core = 7.x
+package = Ken Group
+dependencies[] = views
+files[] = views/main.views.inc
+files[] = views/views_handler_filter_select_status.inc
+files[] = views/views_handler_filter_autoload_name.inc

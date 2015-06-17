@@ -1,0 +1,370 @@
+<?php
+
+/**
+ * Implements hook_menu().
+ */
+function main_menu() {
+    
+   /* $items['kengroup/view-invoice'] = array(//this creates a URL that will call this form at "flower/bouquet-addFlower"
+      'title' => 'View Invoice',
+      // 'description' => 'A form to view all the invoices in database.',
+      'page callback' => 'drupal_get_form', 
+      'page arguments' => array('view_invoice_form'), 
+      'access callback' => TRUE,
+      'type' => MENU_CALLBACK,
+    );*/
+    $items['kengroup/view-invoice-details'] = array(//this creates a URL that will call this form at "flower/bouquet-addFlower"
+      'title' => 'View Invoice',
+      // 'description' => 'A form to view details of selected invoice.',
+      'page callback' => 'drupal_get_form', 
+      'page arguments' => array('view_invoice_details_form', 2), 
+      'access callback' => 'user_is_logged_in',
+      //'access callback' => 'user_access',
+      //'access arguments' => array('administer users'),    //for administer user only
+     // 'access arguments' => array(1), 
+      'type' => MENU_CALLBACK,
+    );
+
+    $items['kengroup/autocomplete'] = array(
+      'page callback' => 'main_autocomplete',
+      'access arguments' => array('access example autocomplete'),
+      'type' => MENU_CALLBACK
+    );
+
+    return $items;
+}
+
+/**
+ * Implements hook_form()
+ */
+function view_invoice_details_form($form, $form_state, $inv_no = 0) {
+    global $user;
+    // $form_state['storage']['invoice_number'] = $inv_no;
+
+    $form['invoice_number'] = array(
+      '#type' => 'hidden',
+      '#value' => $inv_no,
+    );
+
+    $result = db_select('c_form_pendency', 'c')
+        ->fields('c')
+        ->condition('invoice_number', $inv_no)
+        ->execute();
+
+    $entries = $result;
+    $newrow = array();
+    $entry = $entries->fetchObject();
+
+    $newrow[] = array('Sr No', $entry->sr_no, 'Month', $entry->month);
+    $newrow[] = array('Sap Customer Code', $entry->sap_customer_code, 'Invoice Amount', $entry->inv_amt);
+    $newrow[] = array('Goods Supplied From State', $entry->goods_supplied_from_state, 'Currency', $entry->currency);
+    $newrow[] = array('Vc Comp Code', $entry->vc_comp_code, 'Po Number', $entry->po_number);
+    $newrow[] = array('Vc Comp Initial', $entry->vc_comp_initial, 'Tin Number', $entry->tin_number);
+    $newrow[] = array('Invoice Number', $entry->invoice_number, 'Issue C Form To Entity Name', $entry->issue_c_form_to_entity_name);
+    $newrow[] = array('Customer Name', $entry->customer_name, 'Form Type', $entry->form_type);
+    $newrow[] = array('Customer Address', $entry->customer_address, 'Bill State', $entry->bill_state);
+    $newrow[] = array('Customer Location', $entry->customer_location, 'Region', $entry->region);
+    $newrow[] = array('Customer Contact', $entry->customer_contact, 'Total Differential  Tax Liability', $entry->total_differential_tax_liability);
+    $newrow[] = array('Customer Mobile', $entry->customer_mobile, 'Division', $entry->division);
+    $newrow[] = array('Contact Email', $entry->contact_email, 'Sub Division', $entry->sub_division);
+    $newrow[] = array('Quarter', $entry->quarter, 'Main Division', $entry->main_division);
+    $newrow[] = array('Finantial Year', $entry->finantial_year, 'Sales Person Code', $entry->sales_person_code);
+    $newrow[] = array('Invoice Date', $entry->invoice_date, 'Sales Persons Name', $entry->sales_person_name);
+    $newrow[] = array('Status', arr_status($entry->status), '', '');
+
+    $default_status = $entry->status;
+
+    $form['table'] = array(
+      '#theme' => 'table',
+      '#rows' => $newrow,
+      '#empty' => t('No content available.'),);
+
+    $form['status'] = array(
+      "#type" => "select",
+      "#title" => t("Select Invoice"),
+      "#options" => arr_status(),
+      "#default_value" => $default_status,
+    );
+
+    $form['user'] = array(
+      '#type' => 'markup',
+      '#markup' => 'Author: ' . $user->name . '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'
+      . '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;',
+    );
+    $form['date'] = array(
+      '#type' => 'markup',
+      '#markup' => ' Date:' . format_date(time(), 'custom', 'd/m/Y'),
+    );
+
+    $form['comments'] = array(
+      '#type' => 'textarea',
+      '#title' => t('Add your comments'),
+      '#cols' => 70,
+      '#rows' => 3,
+      '#resizable' => FALSE,
+      '#maxlength' => 5000,
+      '#description' => t('Add Comments')
+    );
+
+    $form['all_comments'] = array(
+      '#type' => 'markup',
+      '#markup' => ' ',
+      '#prefix' => '<div id="checkboxes-div">',
+      '#suffix' => '</div>',);
+   
+    $form['save'] = array(
+      '#type' => 'submit',
+      '#value' => 'Save'
+    );
+    $form['blank']= array(
+      '#type'=>'markup',
+      '#markup'=>'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;',
+    );
+    /**
+     * to get the number of comments in the table
+     */
+    $no_of_comments = db_select('invoice_comments', 'c')
+        ->fields('c')
+        ->condition('invoice_number', $inv_no)
+        ->execute()
+        ->rowCount();
+
+    $form['view_comments'] = array(
+      '#type' => 'button',
+      '#value' => 'View all comments(' . $no_of_comments . ')',
+      '#ajax' => array(
+        'event' => 'click',
+        'callback' => 'ajax_callback',
+        'wrapper' => 'checkboxes-div',
+        'method' => 'replace',
+      ),
+    );
+    return $form;
+}
+
+function view_invoice_details_form_submit($form, $form_state) {
+    global $user;
+    $invoice_number = $form_state['values']['invoice_number'];
+    $status = $form_state['values']['status'];
+    //$invoice_number = $form_state['storage']['invoice_number'];
+    $comments = $form_state['values']['comments'];
+    if (!empty($invoice_number)) {
+        try {
+            db_update('c_form_pendency')
+                ->fields(array(
+                  'status' => $status,
+                ))
+                ->condition('invoice_number', $invoice_number)
+                ->execute();
+            if (!empty($comments)) {
+                db_insert('invoice_comments')
+                    ->fields(array(
+                      'invoice_number' => $invoice_number, 'comments' => $comments, 'date' => format_date(time(), 'custom', 'd/m/Y, h:i:s a'), 'author' => t($user->name),
+                    ))
+                    ->execute();
+            }
+        }
+        catch (Exception $ex) {
+            dsm($ex);
+        }
+    }
+}
+
+function view_invoice_form($form, $form_state) {
+    $form['search_main'] = array(
+      '#type' => 'fieldset',
+      '#title' => 'Search By',
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+        //'#attributes' => array('class' => array('container-inline'))
+    );
+
+    $form['search_main']['txt_search'] = array(
+      '#type' => 'textfield',
+      '#title' => 'Customer Name:',
+      //'#default_value'=>'Search',
+      '#autocomplete_path' => 'kengroup/autocomplete',
+    );
+    $form['search_main']['txt_search_inv'] = array(
+      '#type' => 'textfield',
+      '#title' => 'Invoice Number',
+        //'#default_value'=>'Search',
+        //'#autocomplete_path' => 'kengroup/autocomplete',
+    );
+    $form['search_main']['txt_search_status'] = array(
+      '#type' => 'textfield',
+      '#title' => 'Status:',
+        //'#default_value'=>'Search',
+        //'#autocomplete_path' => 'kengroup/autocomplete',
+    );
+
+    $form['search_main']['btn_search'] = array(
+      '#type' => 'button',
+      '#value' => 'search',
+      //'#src' => drupal_get_path('module', 'main') . '/search.png',
+      '#ajax' => array(
+        'event' => 'click',
+        'callback' => 'ajax_callback_search_invoice',
+        'wrapper' => 'searchbox-div',
+        'method' => 'replace',
+      ),
+    );
+    $header = array('Sr No', 'Sap Customer Code', 'Goods Supplied From State', 'Invoice Number', 'Customer Name', 'Quarter', 'Financial Year', 'Invoice Date', 'Month', 'Invoice Amount', 'Currency', 'Po Number',
+      'Tin Number', 'Issue C Form To Entity Name', 'Total Differential Tax Liability', 'Division', 'Status');
+
+    $result = db_select('c_form_pendency', 'c')
+        ->fields('c')
+        ->execute();
+
+    $entries = $result;
+    $rows = array();
+    foreach ($entries as $entry) {
+        $rows[] = array($entry->sr_no, $entry->sap_customer_code, $entry->goods_supplied_from_state, l($entry->invoice_number, 'kengroup/view-invoice-details/' . $entry->invoice_number), $entry->customer_name
+          , $entry->quarter, $entry->finantial_year, $entry->invoice_date, $entry->month, $entry->inv_amt, $entry->currency, $entry->po_number,
+          $entry->tin_number, $entry->issue_c_form_to_entity_name, $entry->total_differential_tax_liability, $entry->division, arr_status($entry->status));
+    }
+
+    $per_page = 10;
+// Initialize the pager
+    $current_page = pager_default_initialize(count($rows), $per_page);
+// Split your list into page sized chunks
+    $chunks = array_chunk($rows, $per_page, TRUE);
+// Show the appropriate items from the list
+    $output = theme('table', array('header' => $header, 'rows' => $chunks[$current_page]));
+    // $output = theme('table', array('header' => $header, 'rows' => $rows));
+    $output .= theme('pager', array('quantity', count($rows)));
+
+    $form['mkup'] = array(
+      '#type' => 'markup',
+      '#markup' => $output,
+      '#prefix' => '<div id="searchbox-div">',
+      '#suffix' => '</div>',);
+
+    return $form;
+}
+
+/* -----------------------------other functions-------------------------------------------------- */
+
+/**
+ * Ajax call back functions
+ */
+function ajax_callback($form, $form_state) {
+
+    $header = array('Author', 'Date', 'Comment');
+    $result = db_select('invoice_comments', 'c')
+        ->fields('c', array('comments', 'date', 'author'))
+        ->condition('invoice_number', $form_state['values']['invoice_number'])
+        ->execute();
+    $entries = $result;
+    $rows = array();
+    foreach ($entries as $entry) {
+
+        $rows[] = array($entry->author, $entry->date, $entry->comments);
+    }
+    $output = theme('table', array('header' => $header, 'rows' => $rows));
+
+    $form['all_comments']['#markup'] = $output;
+    return $form['all_comments'];
+}
+
+function ajax_callback_search_invoice($form, $form_state) {
+    $cust_name = $form_state['values']['txt_search'];
+
+    $header = array('Sr No', 'Sap Customer Code', 'Goods Supplied From State', 'Invoice Number', 'Customer Name', 'Quarter', 'Financial Year',
+      'Invoice Date', 'Month', 'Invoice Amount', 'Currency', 'Po Number', 'Tin Number', 'Issue C Form To Entity Name', 'Total Differential Tax Liability', 'Division', 'Status');
+    if (!empty($cust_name)) {
+
+        $result = db_select('c_form_pendency', 'c')
+            ->fields('c')
+            ->condition('customer_name', $cust_name)
+            ->execute();
+    }
+    else {
+        $result = db_select('c_form_pendency', 'c')
+            ->fields('c')
+            ->execute();
+    }
+
+    $entries = $result;
+    $rows = array();
+    foreach ($entries as $entry) {
+        $rows[] = array($entry->sr_no, $entry->sap_customer_code, $entry->goods_supplied_from_state, l($entry->invoice_number, 'kengroup/view-invoice-details/' . $entry->invoice_number), $entry->customer_name,
+          $entry->quarter, $entry->finantial_year, $entry->invoice_date, $entry->month, $entry->inv_amt, $entry->currency, $entry->po_number,
+          $entry->tin_number, $entry->issue_c_form_to_entity_name, $entry->total_differential_tax_liability, $entry->division, arr_status($entry->status));
+    }
+    $per_page = 10;
+// Initialize the pager
+    $current_page = pager_default_initialize(count($rows), $per_page);
+// Split your list into page sized chunks
+    $chunks = array_chunk($rows, $per_page, TRUE);
+// Show the appropriate items from the list
+    $output = theme('table', array('header' => $header, 'rows' => $chunks[$current_page]));
+    $output .= theme('pager', array('quantity', count($rows)));
+    $form['mkup']['#markup'] = $output;
+    return $form['mkup'];
+}
+
+/**
+ * auto complete function for search textfield 
+ */
+function main_autocomplete($string) {
+
+    $matches = array();
+    $result = db_select('c_form_pendency')
+        ->fields('c_form_pendency', array('customer_name'))
+        ->condition('c_form_pendency.customer_name', '%' . db_like($string) . '%', 'LIKE')
+        ->range(0, 50)
+        ->execute();
+
+    // save the query to matches
+    foreach ($result as $row) {
+        $matches[$row->customer_name] = check_plain($row->customer_name);
+    }
+
+    // Return the result to the form in json
+    drupal_json_output($matches);
+}
+
+/**
+ * returns status if status is not empty,
+ * else returns the status array
+ */
+function arr_status($status = 0) {
+    $arr_status = array(
+      1 => t("Allocation of Invoice"),
+      2 => t("Calling"),
+      3 => t("Issues"),
+      4 => t("Invoice Verification"),
+      5 => t("Follow-up"),
+      6 => t("Call"),
+      7 => t("Mail"),
+      8 => t("Visit"),
+      9 => t("Physical copy despatched along with date"),
+      10 => t("Physical copy receipt confirmed along with date"),
+      11 => t("Collected along with date"),
+      12 => t("Ken Bill Pending"),
+      13 => t("Ken Invoiced"),
+      14 => t("Ken Invoice collected"),
+    );
+    if (empty($status)) {
+        return $arr_status;
+    }
+    else {
+        return $arr_status[$status];
+    }
+}
+
+/* -------------------------------------- end ------------------------------- */
+
+/**
+ * Implements hook_views_api().
+ */
+function main_views_api() {
+    return array(
+      'api' => 3,
+      'path' => drupal_get_path('module', 'main.views') . '/sites/default/modules/main/views',
+    );
+}
+
+//"C:\wamp\www\www.KenGroup.com\sites\default\modules\main\views\main.views.inc"
+
